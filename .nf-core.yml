@@ -57,7 +57,7 @@ template:
   name: virba_sniff
   description: An end-to-end pipeline for analyzing viruses and bacteria in metagenomic
     sequencing data
-  author: 'Eli '
+  author: "Eli "
   version: 1.0.0dev
   force: true
   outdir: .

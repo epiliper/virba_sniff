@@ -18,30 +18,6 @@ include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_virb
 include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_virba_sniff_pipeline'
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    NAMED WORKFLOWS FOR PIPELINE
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
-
-//
-// WORKFLOW: Run main analysis pipeline depending on type of input
-//
-workflow GLAB_VIRBA_SNIFF {
-
-    take:
-    samplesheet // channel: samplesheet read in from --input
-
-    main:
-
-    //
-    // WORKFLOW: Run pipeline
-    //
-    VIRBA_SNIFF (
-        samplesheet,
-        params.outdir,
-    )
-}
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN MAIN WORKFLOW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
@@ -67,9 +43,11 @@ workflow {
     //
     // WORKFLOW: Run main workflow
     //
-    GLAB_VIRBA_SNIFF (
-        PIPELINE_INITIALISATION.out.samplesheet
+    VIRBA_SNIFF (
+        PIPELINE_INITIALISATION.out.samplesheet,
+        params.outdir,
     )
+
     //
     // SUBWORKFLOW: Run completion tasks
     //
