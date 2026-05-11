@@ -15,7 +15,7 @@ include { KRAKENTOOLS_EXTRACTKRAKENREADS as KRAKEN_EXTRACT_VIRUSES } from '../mo
 include { KRAKENTOOLS_EXTRACTKRAKENREADS as KRAKEN_EXTRACT_BACTERIA } from '../modules/nf-core/krakentools/extractkrakenreads/main'
 
 include { VIRUSES } from '../subworkflows/local/viruses'
-include { BACTERIA } from '../subworkflows/local/bacteria'
+// include { BACTERIA } from '../subworkflows/local/bacteria'
 
 
 /*
@@ -29,7 +29,9 @@ workflow VIRBA_SNIFF {
     take:
     ch_samplesheet      // channel: samplesheet read in from --input
     kraken2_host_db     // path
-    kraken2_save_host   // path
+
+    // TODO
+    _kraken2_save_host   // path
 
     taxon_bac_db        // path
 
@@ -65,8 +67,8 @@ workflow VIRBA_SNIFF {
         .join(KRAKEN2_CLASSIFY.out.report).set { classify_ch }
 
     // level 1: extract lineages
-    KRAKEN_EXTRACT_VIRUSES(classify_ch, VIRUS_NCBI_TAXID)
-    KRAKEN_EXTRACT_BACTERIA(classify_ch, BACTERIA_NCBI_TAXID)
+    KRAKEN_EXTRACT_VIRUSES(classify_ch.combine(VIRUS_NCBI_TAXID))
+    KRAKEN_EXTRACT_BACTERIA(classify_ch.combine(BACTERIA_NCBI_TAXID))
 
     KRAKEN_EXTRACT_VIRUSES.out.extracted_kraken2_reads
         .join(KRAKEN2_CLASSIFY.out.classified_reads_assignment)
@@ -74,15 +76,15 @@ workflow VIRBA_SNIFF {
         .map { meta, reads, assign, report, _tid -> [ meta, reads, assign, report ]}
         .set { vir_ch }
 
-    KRAKEN_EXTRACT_BACTERIA.out.extracted_kraken2_reads
-        .join(KRAKEN2_CLASSIFY.out.classified_reads_assignment)
-        .join(KRAKEN2_CLASSIFY.out.report)
-        .map { meta, reads, assign, report, _tid -> [ meta, reads, assign, report ]}
-        .set { bac_ch }
+    // KRAKEN_EXTRACT_BACTERIA.out.extracted_kraken2_reads
+    //     .join(KRAKEN2_CLASSIFY.out.classified_reads_assignment)
+    //     .join(KRAKEN2_CLASSIFY.out.report)
+    //     .map { meta, reads, assign, report, _tid -> [ meta, reads, assign, report ]}
+    //     .set { bac_ch }
 
-    VIRUSES(vir_ch)
+    VIRUSES(vir_ch, taxon_vir_db, taxon_vir_ids)
 
-    BACTERIA(bac_ch)
+    // BACTERIA(bac_ch)
 
 
     // END MAIN WORKFLOW

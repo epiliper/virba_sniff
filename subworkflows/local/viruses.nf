@@ -17,6 +17,12 @@ include { IVAR_CONSENSUS as IVAR_CONSENSUS_2 } from '../../modules/nf-core/ivar/
 
 include { CREATE_SCAFFOLD } from '../../modules/local/create_scaffold'
 
+// Denovo assembly for viruses
+
+// Intakes 
+// 1. reads presumably classified by kraken2 to belong to viruses
+// 2. database of refs used to guide assembly
+// 3. a list of taxonids to be used to attempt read extraction and assembly
 workflow VIRUSES {
     take: 
     classified_reads  // tuple val(meta), path(extracted_reads), path(assignment), path(report), lineage-level reads

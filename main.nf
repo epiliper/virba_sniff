@@ -45,6 +45,13 @@ workflow {
     //
     VIRBA_SNIFF (
         PIPELINE_INITIALISATION.out.samplesheet,
+        params.kraken2_host_db,
+        params.kraken2_save_host,
+
+        params.taxon_bac_db,
+
+        params.taxon_vir_db,
+        params.taxon_vir_ids,
         params.outdir,
     )
 

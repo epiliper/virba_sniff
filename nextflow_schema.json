@@ -35,6 +35,26 @@
                     "fa_icon": "fas fa-envelope",
                     "help_text": "Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits. If set in your user config file (`~/.nextflow/config`) then you don't need to specify this on the command line for every run.",
                     "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$"
+                },
+                "kraken2_host_db": {
+                	"type": "directory-path",
+                	"description": "use a kraken2 database to remove host reads"
+                },
+                "kraken2_save_host": {
+                	"type": "bool",
+                	"description": "save the host-matching reads if a kraken2 host db was provided"
+                },
+                "taxon_bac_db": {
+                	"type": "directory-path",
+                	"description": "kraken2 database to use for selecting bacterial reads"
+                },
+                "taxon_vir_db": {
+                	"type": "directory-path",
+                	"description": "kraken2 database to use for selecting viral reads"
+                },
+                "taxon_vir_ids": {
+                	"type": "path",
+                	"description": "single-column, headerless TSV of viral taxids to be considered for denovo assembly"
                 }
             }
         },
