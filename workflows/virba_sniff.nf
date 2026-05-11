@@ -27,54 +27,84 @@ include { VIRUSES } from '../subworkflows/local/viruses'
 workflow VIRBA_SNIFF {
 
     take:
-    ch_samplesheet      // channel: samplesheet read in from --input
-    kraken2_host_db     // path
+    ch_samplesheet              // channel: samplesheet read in from --input
+    fastp_adapter_fasta         // path
+    kraken2_host_db             // path
 
     // TODO
-    _kraken2_save_host   // path
+    _kraken2_save_host          // path
 
-    taxon_bac_db        // path
+    kraken2_bacteria_db         // path
+    kraken2_virus_db            // path
 
-    taxon_vir_db        // path
-    taxon_vir_ids       // path
+    virus_assembly_taxonids     // path
+    virus_assembly_db           // path
+
+    min_assembly_coverage      // float
+    min_assembly_depth         // float
 
     outdir
 
     main:
 
-    def VIRUS_NCBI_TAXID = "10239"
-    def BACTERIA_NCBI_TAXID = "2"
-
-
+    def VIRUS_NCBI_TAXID = channel.value([name: "viruses", id: 10239])
+    def BACTERIA_NCBI_TAXID = channel.value([name: "bacteria", id: 2])
     def ch_versions = channel.empty()
 
     ch_samplesheet.set { main_ch }
 
+    def kraken2_dbs = []
+
+    if (kraken2_bacteria_db) {
+            kraken2_dbs += kraken2_bacteria_db
+        } else {
+                log.warn("No kraken2 bacterial database given. Analysis will not cover bacteria.")
+            }
+
+    if (kraken2_virus_db) {
+            kraken2_dbs += kraken2_virus_db
+        } else {
+                log.warn("No kraken2 virus database given. Analysis will not cover viruses.")
+            }
+
+    if (!virus_assembly_db) {
+            log.warn("No virus assembly database supplied. Viruses will not be de-novo assembled")
+        }
+
     // BEGIN MAIN WORKFLOW
 
     // TODO: check adapters used here
-    FASTP(main_ch, false, false, false).set { main_ch }
+    FASTP(main_ch.combine(channel.value(fastp_adapter_fasta)), false, false, false)
+    FASTP.out.reads.set { main_ch }
 
     if (kraken2_host_db) {
-            KRAKEN2_REMOVE_HOST(ch_samplesheet, kraken2_host_db, false, false)
+            KRAKEN2_REMOVE_HOST(main_ch, kraken2_host_db, false, false)
             KRAKEN2_REMOVE_HOST.out.unclassified_reads_fastq.set { main_ch }
         }
 
-    KRAKEN2_CLASSIFY(main_ch, [taxon_bac_db, taxon_vir_db], false, false)
+    KRAKEN2_CLASSIFY(main_ch, kraken2_dbs, false, false)
 
     KRAKEN2_CLASSIFY.out.classified_reads_assignment
         .join(KRAKEN2_CLASSIFY.out.classified_reads_fastq)
         .join(KRAKEN2_CLASSIFY.out.report).set { classify_ch }
 
     // level 1: extract lineages
-    KRAKEN_EXTRACT_VIRUSES(classify_ch.combine(VIRUS_NCBI_TAXID))
-    KRAKEN_EXTRACT_BACTERIA(classify_ch.combine(BACTERIA_NCBI_TAXID))
+    if (virus_assembly_db) {
+        KRAKEN_EXTRACT_VIRUSES(classify_ch.combine(VIRUS_NCBI_TAXID), false, true)
 
-    KRAKEN_EXTRACT_VIRUSES.out.extracted_kraken2_reads
-        .join(KRAKEN2_CLASSIFY.out.classified_reads_assignment)
-        .join(KRAKEN2_CLASSIFY.out.report)
-        .map { meta, reads, assign, report, _tid -> [ meta, reads, assign, report ]}
-        .set { vir_ch }
+
+        KRAKEN_EXTRACT_VIRUSES.out.extracted_kraken2_reads.map { meta, reads, _tid -> [ meta, reads ]}
+            .join(KRAKEN2_CLASSIFY.out.classified_reads_assignment)
+            .join(KRAKEN2_CLASSIFY.out.report)
+            .map { meta, reads, asn, report -> [ meta, asn, reads, report ]}
+            .set { vir_ch }
+
+
+        VIRUSES(vir_ch, virus_assembly_db, virus_assembly_taxonids, min_assembly_coverage, min_assembly_depth)
+    }
+
+    KRAKEN_EXTRACT_BACTERIA(classify_ch.combine(BACTERIA_NCBI_TAXID), false, true)
+
 
     // KRAKEN_EXTRACT_BACTERIA.out.extracted_kraken2_reads
     //     .join(KRAKEN2_CLASSIFY.out.classified_reads_assignment)
@@ -82,10 +112,9 @@ workflow VIRBA_SNIFF {
     //     .map { meta, reads, assign, report, _tid -> [ meta, reads, assign, report ]}
     //     .set { bac_ch }
 
-    VIRUSES(vir_ch, taxon_vir_db, taxon_vir_ids)
 
     // BACTERIA(bac_ch)
-
+    // }
 
     // END MAIN WORKFLOW
 

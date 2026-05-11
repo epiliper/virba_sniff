@@ -36,26 +36,48 @@
                     "help_text": "Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits. If set in your user config file (`~/.nextflow/config`) then you don't need to specify this on the command line for every run.",
                     "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$"
                 },
+                "fastp_adapter_fasta": {
+                	"type": "string",
+                	"format": "path", 
+                	"description": "fasta of adapter sequences for FASTP to use during trimming"
+                },
                 "kraken2_host_db": {
-                	"type": "directory-path",
+                	"type": "string",
+                	"format": "directory-path",
                 	"description": "use a kraken2 database to remove host reads"
                 },
                 "kraken2_save_host": {
-                	"type": "bool",
+                	"type": "boolean",
                 	"description": "save the host-matching reads if a kraken2 host db was provided"
                 },
-                "taxon_bac_db": {
-                	"type": "directory-path",
+                "kraken2_bacteria_db": {
+                	"type": "string",
+                	"format": "directory-path",
                 	"description": "kraken2 database to use for selecting bacterial reads"
                 },
-                "taxon_vir_db": {
-                	"type": "directory-path",
+                "kraken2_virus_db": {
+                	"type": "string",
+                	"format": "directory-path",
                 	"description": "kraken2 database to use for selecting viral reads"
                 },
-                "taxon_vir_ids": {
-                	"type": "path",
+                "virus_assembly_taxonids": {
+                	"type": "string",
+                	"format": "path",
                 	"description": "single-column, headerless TSV of viral taxids to be considered for denovo assembly"
-                }
+                },
+                "virus_assembly_db": {
+                	"type": "string",
+                	"format": "path",
+                	"description": "single-column, headerless TSV of viral taxids to be considered for denovo assembly"
+                },
+								"assembly_min_coverage": {
+									"type": "number",
+									"description": "minimum alignment coverage for a reference to be selected for de-novo assembly."
+								},
+								"assembly_min_depth": {
+									"type": "number",
+									"description": "minimum alignment depth for a refernce to be selected for de-novo assembly."
+								}
             }
         },
         "institutional_config_options": {

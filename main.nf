@@ -45,14 +45,21 @@ workflow {
     //
     VIRBA_SNIFF (
         PIPELINE_INITIALISATION.out.samplesheet,
+        params.fastp_adapter_fasta,
         params.kraken2_host_db,
+
         params.kraken2_save_host,
 
-        params.taxon_bac_db,
+        params.kraken2_bacteria_db,
+        params.kraken2_virus_db,
 
-        params.taxon_vir_db,
-        params.taxon_vir_ids,
-        params.outdir,
+        params.virus_assembly_taxonids,
+        params.virus_assembly_db,
+
+        params.assembly_min_coverage,
+        params.assembly_min_depth,
+
+        params.outdir
     )
 
     //

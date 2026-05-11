@@ -1,11 +1,13 @@
 process SELECT_BEST_KMA_REF {
-    tag "$meta.id | $meta.name"
+    tag "$meta.id"
     label 'process_single'
     container "quay.io/biocontainers/python:3.14"
 
     input:
     tuple val(meta), path(kma_res)
     path(ref_fasta)
+    val min_coverage
+    val min_depth
 
     output:
     tuple val(meta), path("*_best_ref.fa"), emit: chosen_ref
@@ -14,7 +16,7 @@ process SELECT_BEST_KMA_REF {
     def prefix = task.ext.prefix ?: "${meta.id}"
 
     """
-    select_ref_from_kma.py -i $kma_res --prefix ${prefix} -r ${ref_fasta}
+    select_ref_from_kma.py -i $kma_res --prefix ${prefix} -r ${ref_fasta} --min_coverage ${min_coverage} --min_depth ${min_depth}
     """
 
     }

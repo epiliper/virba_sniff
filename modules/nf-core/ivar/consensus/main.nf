@@ -26,6 +26,7 @@ process IVAR_CONSENSUS {
     def args2 = task.ext.args2 ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     def mpileup = save_mpileup ? "| tee ${prefix}.mpileup" : ""
+
     """
     samtools \\
         mpileup \\
