@@ -54,7 +54,7 @@ def find_ref_in_fasta(fasta: str, ref_name: str) -> str:
                 if ref_name in l:
                     print(ref_name)
                     found = True
-                    ret += l # add header
+                    ret += ">" + get_species_tag(l) + "\n" # add header
                     continue
 
     raise ValueError(f"ref {ref_name} is not in the fasta file {fasta}!")

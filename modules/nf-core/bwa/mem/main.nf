@@ -8,15 +8,15 @@ process BWA_MEM {
         'community.wave.seqera.io/library/bwa_htslib_samtools:83b50ff84ead50d0' }"
 
     input:
-    tuple val(meta), path(reads), path(index)
+    tuple val(meta), path(reads), val(refinfo), path(index)
     val suffix
     val sort_bam
 
     output:
-    tuple val(meta), path("*.bam")  , emit: bam,    optional: true
-    tuple val(meta), path("*.cram") , emit: cram,   optional: true
-    tuple val(meta), path("*.csi")  , emit: csi,    optional: true
-    tuple val(meta), path("*.crai") , emit: crai,   optional: true
+    tuple val(meta), val(refinfo), path("*.bam")  , emit: bam,    optional: true
+    tuple val(meta), val(refinfo), path("*.cram") , emit: cram,   optional: true
+    tuple val(meta), val(refinfo), path("*.csi")  , emit: csi,    optional: true
+    tuple val(meta), val(refinfo), path("*.crai") , emit: crai,   optional: true
     tuple val("${task.process}"), val('bwa'), eval('bwa 2>&1 | sed -n "s/^Version: //p"'), topic: versions, emit: versions_bwa
     tuple val("${task.process}"), val('samtools'), eval("samtools version | sed '1!d;s/.* //'"), topic: versions, emit: versions_samtools
 
@@ -26,13 +26,14 @@ process BWA_MEM {
     script:
     def args = task.ext.args ?: ''
     def args2 = task.ext.args2 ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: "${meta.id}_${refinfo.tag}"
     def samtools_command = sort_bam ? 'sort' : 'view'
     def extension = args2.contains("--output-fmt sam")   ? "sam" :
                     args2.contains("--output-fmt cram")  ? "cram":
                     sort_bam && args2.contains("-O cram")? "cram":
                     !sort_bam && args2.contains("-C")    ? "cram":
                     "bam"
+
     """
     INDEX=`find -L ./ -name "*.amb" | sed 's/\\.amb\$//'`
 

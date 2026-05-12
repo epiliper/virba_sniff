@@ -1,5 +1,5 @@
 process BWA_INDEX {
-    tag "$fasta"
+    tag "$meta.id | $refinfo.tag"
     // NOTE requires 5.37N memory where N is the size of the database
     // source: https://bio-bwa.sourceforge.net/bwa.shtml#8
     // memory { 10.B * fasta.size() }
@@ -11,10 +11,10 @@ process BWA_INDEX {
         'community.wave.seqera.io/library/bwa_htslib_samtools:83b50ff84ead50d0' }"
 
     input:
-    tuple val(meta), path(fasta)
+    tuple val(meta), val(refinfo), path(fasta)
 
     output:
-    tuple val(meta), path("bwa"), emit: index
+    tuple val(meta), val(refinfo), path("bwa"), emit: index
     tuple val("${task.process}"), val('bwa'), eval('bwa 2>&1 | sed -n "s/^Version: //p"'), topic: versions, emit: versions_bwa
 
     when:

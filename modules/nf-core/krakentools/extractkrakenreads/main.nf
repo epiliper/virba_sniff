@@ -15,7 +15,7 @@ process KRAKENTOOLS_EXTRACTKRAKENREADS {
 
     output:
     tuple val(meta), path("*.{fastq.gz,fasta.gz}"), val(taxinfo), emit: extracted_kraken2_reads
-    tuple val(meta), path("NUM_EXTRACTED_READS"), emit: num_ext_reads
+    tuple val(meta), env('NUM_EXTRACTED_READS'), emit: num_ext_reads
 
     path "versions.yml", emit: versions
 
@@ -37,13 +37,13 @@ process KRAKENTOOLS_EXTRACTKRAKENREADS {
     def readcount_cmd = """
     sum=0
     for file in ${prefix}*extracted_kraken2*${extension}.gz; do
-        nlines=\$(zcat \$file)
+        nlines=\$(zcat \$file | wc -l)
         nreads=\$((nlines / 4))
         echo "\$file has \$nreads reads..."
         sum=\$((sum + nreads))
     done
 
-    echo \$sum > NUM_EXTRACTED_READS
+    export NUM_EXTRACTED_READS=\$sum
     """
 
     """
@@ -58,7 +58,7 @@ process KRAKENTOOLS_EXTRACTKRAKENREADS {
         $parents
 
     $gzip_reads_command
-    ${readcount_cmd}
+    $readcount_cmd
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

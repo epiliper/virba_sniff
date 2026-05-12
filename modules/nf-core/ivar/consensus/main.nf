@@ -1,5 +1,5 @@
 process IVAR_CONSENSUS {
-    tag "$meta.id"
+    tag "$meta.id | $refinfo.tag"
     label 'process_medium'
 
     conda "${moduleDir}/environment.yml"
@@ -8,14 +8,14 @@ process IVAR_CONSENSUS {
         'quay.io/biocontainers/ivar:1.4.4--h077b44d_0' }"
 
     input:
-    tuple val(meta), path(bam), path(fasta)
+    tuple val(meta), val(refinfo), path(bam), path(fasta)
     val suffix
     val save_mpileup
 
     output:
-    tuple val(meta), path("*.fa")      , emit: fasta
-    tuple val(meta), path("*.qual.txt"), emit: qual
-    tuple val(meta), path("*.mpileup") , optional:true, emit: mpileup
+    tuple val(meta), val(refinfo), path("*.fa")      , emit: fasta
+    tuple val(meta), val(refinfo), path("*.qual.txt"), emit: qual
+    tuple val(meta), val(refinfo), path("*.mpileup") , optional:true, emit: mpileup
     path "versions.yml"                , emit: versions
 
     when:
@@ -24,7 +24,7 @@ process IVAR_CONSENSUS {
     script:
     def args = task.ext.args ?: ''
     def args2 = task.ext.args2 ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = "${meta.id}_${refinfo.tag}"
     def mpileup = save_mpileup ? "| tee ${prefix}.mpileup" : ""
 
     """
