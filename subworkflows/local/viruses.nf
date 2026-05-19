@@ -60,7 +60,7 @@ workflow VIRUSES {
     KRAKEN_EXTRACT_SUBTAXA.out.extracted_kraken2_reads
     .join(KRAKEN_EXTRACT_SUBTAXA.out.num_ext_reads)
         // were we able to extract at least x reads for this taxon id?
-        .filter{ _meta, _reads, _tid, num_reads -> num_reads.toInteger() >= 300 }
+        .filter{ _meta, _reads, _tid, num_reads -> num_reads.toInteger() >= 50 }
         // differentiate meta further by taxonid going forward
         .map { meta, reads, tid, _num_reads -> [ meta + [species: tid.name, taxon_id: tid.id], reads ] }
         .dump(tag: "subtaxa extraction output")

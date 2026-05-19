@@ -48,6 +48,8 @@ workflow {
         params.fastp_adapter_fasta,
         params.kraken2_host_db,
 
+        params.skip_fastp,
+
         params.kraken2_save_host,
 
         params.kraken2_bacteria_db,

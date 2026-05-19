@@ -31,6 +31,8 @@ workflow VIRBA_SNIFF {
     fastp_adapter_fasta         // path
     kraken2_host_db             // path
 
+    skip_fastp
+
     // TODO
     _kraken2_save_host          // path
 
@@ -74,15 +76,17 @@ workflow VIRBA_SNIFF {
     // BEGIN MAIN WORKFLOW
 
     // TODO: check adapters used here
-    FASTP(main_ch.combine(channel.value(fastp_adapter_fasta)), false, false, false)
-    FASTP.out.reads.set { main_ch }
+    if (!skip_fastp) {
+        FASTP(main_ch.combine(channel.value(fastp_adapter_fasta)), false, false, false)
+        FASTP.out.reads.set { main_ch }
+    }
 
     if (kraken2_host_db) {
             KRAKEN2_REMOVE_HOST(main_ch, kraken2_host_db, false, false)
             KRAKEN2_REMOVE_HOST.out.unclassified_reads_fastq.set { main_ch }
         }
 
-    KRAKEN2_CLASSIFY(main_ch, kraken2_dbs, false, false)
+    KRAKEN2_CLASSIFY(main_ch, kraken2_virus_db, false, false)
 
     KRAKEN2_CLASSIFY.out.classified_reads_assignment
         .join(KRAKEN2_CLASSIFY.out.classified_reads_fastq)

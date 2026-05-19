@@ -1,6 +1,8 @@
 process KRAKEN2_KRAKEN2 {
     tag "$meta.id"
-    label 'process_high'
+    cpus 12
+    memory 128.GB
+    time 4.h
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
@@ -9,7 +11,7 @@ process KRAKEN2_KRAKEN2 {
 
     input:
     tuple val(meta), path(reads)
-    path  dbs
+    val db
     val save_output_fastqs
     val save_reads_assignment
 
@@ -26,7 +28,6 @@ process KRAKEN2_KRAKEN2 {
     task.ext.when == null || task.ext.when
 
     script:
-    def db_arg = dbs.join(",")
     def prefix = task.ext.prefix ?: "${meta.id}"
     def outprefix = "k2out/${prefix}"
     def args = task.ext.args ?: ''
@@ -41,7 +42,7 @@ process KRAKEN2_KRAKEN2 {
     """
     mkdir -p k2out
     kraken2 \\
-        --db $db_arg \\
+        --db $db \\
         --threads $task.cpus \\
         --report ${outprefix}.kraken2.report.txt \\
         --gzip-compressed \\

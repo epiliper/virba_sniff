@@ -41,6 +41,10 @@
                 	"format": "path", 
                 	"description": "fasta of adapter sequences for FASTP to use during trimming"
                 },
+                "skip_fastp": {
+                	"type": "boolean",
+                	"description": "skip FASTP trimming"
+                },
                 "kraken2_host_db": {
                 	"type": "string",
                 	"format": "directory-path",

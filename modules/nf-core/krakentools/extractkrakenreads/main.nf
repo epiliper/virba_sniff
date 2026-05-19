@@ -38,7 +38,7 @@ process KRAKENTOOLS_EXTRACTKRAKENREADS {
     sum=0
     for file in ${prefix}*extracted_kraken2*${extension}.gz; do
         nlines=\$(zcat \$file | wc -l)
-        nreads=\$((nlines / 4))
+        nreads=\$((nlines / 2))
         echo "\$file has \$nreads reads..."
         sum=\$((sum + nreads))
     done
