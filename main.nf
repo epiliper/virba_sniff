@@ -55,6 +55,10 @@ workflow {
         params.kraken2_bacteria_db,
         params.kraken2_virus_db,
 
+        params.classify_conf_thres,
+        params.classify_min_fastq_score,
+        params.classify_emit_minimizers,
+
         params.virus_assembly_taxonids,
         params.virus_assembly_db,
 

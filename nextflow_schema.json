@@ -64,6 +64,18 @@
                 	"format": "directory-path",
                 	"description": "kraken2 database to use for selecting viral reads"
                 },
+                "classify_min_fastq_score": {
+                	"type": "number",
+									"description": "minimum fastq score for classification"
+                },
+                "classify_conf_thres": {
+                	"type": "number",
+									"description": "confidence threshold (% of query kmers hit) for classification"
+                },
+                "classify_emit_minimizers": {
+                	"type": "boolean",
+                	"description": "emit minimizers from classifier"
+                },
                 "virus_assembly_taxonids": {
                 	"type": "string",
                 	"format": "path",

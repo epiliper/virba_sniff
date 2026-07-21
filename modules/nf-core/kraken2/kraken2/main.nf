@@ -1,7 +1,7 @@
 process KRAKEN2_KRAKEN2 {
     tag "$meta.id"
-    cpus 12
-    memory 128.GB
+    cpus 8
+    memory 72.GB
     time 4.h
 
     conda "${moduleDir}/environment.yml"

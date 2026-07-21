@@ -9,6 +9,7 @@ include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_virb
 
 include { KRAKEN2_KRAKEN2 as KRAKEN2_REMOVE_HOST } from '../modules/nf-core/kraken2/kraken2/main'
 include { KRAKEN2_KRAKEN2 as KRAKEN2_CLASSIFY    } from '../modules/nf-core/kraken2/kraken2/main'
+include { KUNPENG_CLASSIFY } from '../modules/local/kunpeng_classify.nf'
 
 include { FASTP } from '../modules/nf-core/fastp/main'
 include { KRAKENTOOLS_EXTRACTKRAKENREADS as KRAKEN_EXTRACT_VIRUSES } from '../modules/nf-core/krakentools/extractkrakenreads/main'
@@ -38,6 +39,10 @@ workflow VIRBA_SNIFF {
 
     kraken2_bacteria_db         // path
     kraken2_virus_db            // path
+
+    classify_conf_thres         // number
+    classify_min_fastq_score    // number
+    classify_emit_minimizers    // boolean
 
     virus_assembly_taxonids     // path
     virus_assembly_db           // path
@@ -86,11 +91,18 @@ workflow VIRBA_SNIFF {
             KRAKEN2_REMOVE_HOST.out.unclassified_reads_fastq.set { main_ch }
         }
 
-    KRAKEN2_CLASSIFY(main_ch, kraken2_virus_db, false, false)
+    // KRAKEN2_CLASSIFY(main_ch, kraken2_virus_db, false, false)
 
-    KRAKEN2_CLASSIFY.out.classified_reads_assignment
-        .join(KRAKEN2_CLASSIFY.out.classified_reads_fastq)
-        .join(KRAKEN2_CLASSIFY.out.report).set { classify_ch }
+    // KRAKEN2_CLASSIFY.out.classified_reads_assignment
+    //     .join(KRAKEN2_CLASSIFY.out.classified_reads_fastq)
+    //     .join(KRAKEN2_CLASSIFY.out.report).set { classify_ch }
+
+    KUNPENG_CLASSIFY(main_ch, classify_conf_thres, classify_min_fastq_score, kraken2_virus_db, classify_emit_minimizers)
+
+    KUNPENG_CLASSIFY.out.assignment
+        .join(main_ch)
+        .join(KUNPENG_CLASSIFY.out.report)
+        .set { classify_ch }
 
     // level 1: extract lineages
     if (virus_assembly_db) {
@@ -107,7 +119,7 @@ workflow VIRBA_SNIFF {
         VIRUSES(vir_ch, virus_assembly_db, virus_assembly_taxonids, min_assembly_coverage, min_assembly_depth)
     }
 
-    KRAKEN_EXTRACT_BACTERIA(classify_ch.combine(BACTERIA_NCBI_TAXID), false, true)
+    // KRAKEN_EXTRACT_BACTERIA(classify_ch.combine(BACTERIA_NCBI_TAXID), false, true)
 
 
     // KRAKEN_EXTRACT_BACTERIA.out.extracted_kraken2_reads
