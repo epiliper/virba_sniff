@@ -3,13 +3,16 @@
     IMPORT MODULES / SUBWORKFLOWS / FUNCTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-include { paramsSummaryMap       } from 'plugin/nf-schema'
+include { paramsSummaryMap } from 'plugin/nf-schema'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_virba_sniff_pipeline'
 
 include { KRAKEN2_KRAKEN2 as KRAKEN2_REMOVE_HOST } from '../modules/nf-core/kraken2/kraken2/main'
-include { KRAKEN2_KRAKEN2 as KRAKEN2_CLASSIFY    } from '../modules/nf-core/kraken2/kraken2/main'
+include { KRAKEN2_KRAKEN2 as KRAKEN2_CLASSIFY } from '../modules/nf-core/kraken2/kraken2/main'
 include { KUNPENG_CLASSIFY } from '../modules/local/kunpeng_classify.nf'
+
+include { BBMAP_BBDUK } from '../modules/local/bbduk'
+include { MINIMAP2_BIG } from '../modules/local/minimap2'
 
 include { FASTP } from '../modules/nf-core/fastp/main'
 include { KRAKENTOOLS_EXTRACTKRAKENREADS as KRAKEN_EXTRACT_VIRUSES } from '../modules/nf-core/krakentools/extractkrakenreads/main'
@@ -26,30 +29,21 @@ include { VIRUSES } from '../subworkflows/local/viruses'
 */
 
 workflow VIRBA_SNIFF {
-
     take:
-    ch_samplesheet              // channel: samplesheet read in from --input
-    fastp_adapter_fasta         // path
-    kraken2_host_db             // path
-
+    ch_samplesheet // channel: samplesheet read in from --input
+    fastp_adapter_fasta // path
+    kraken2_host_db // path
     skip_fastp
-
-    // TODO
-    _kraken2_save_host          // path
-
-    kraken2_bacteria_db         // path
-    kraken2_virus_db            // path
-
-    classify_conf_thres         // number
-    classify_min_fastq_score    // number
-    classify_emit_minimizers    // boolean
-
-    virus_assembly_taxonids     // path
-    virus_assembly_db           // path
-
-    min_assembly_coverage      // float
-    min_assembly_depth         // float
-
+    _kraken2_save_host // path
+    kraken2_bacteria_db // path
+    kraken2_virus_db // path
+    classify_conf_thres // number
+    classify_min_fastq_score // number
+    classify_emit_minimizers // boolean
+    virus_assembly_taxonids // path
+    virus_assembly_db // path
+    min_assembly_coverage // float
+    min_assembly_depth // float
     outdir
 
     main:
@@ -63,20 +57,22 @@ workflow VIRBA_SNIFF {
     def kraken2_dbs = []
 
     if (kraken2_bacteria_db) {
-            kraken2_dbs += kraken2_bacteria_db
-        } else {
-                log.warn("No kraken2 bacterial database given. Analysis will not cover bacteria.")
-            }
+        kraken2_dbs += kraken2_bacteria_db
+    }
+    else {
+        log.warn("No kraken2 bacterial database given. Analysis will not cover bacteria.")
+    }
 
     if (kraken2_virus_db) {
-            kraken2_dbs += kraken2_virus_db
-        } else {
-                log.warn("No kraken2 virus database given. Analysis will not cover viruses.")
-            }
+        kraken2_dbs += kraken2_virus_db
+    }
+    else {
+        log.warn("No kraken2 virus database given. Analysis will not cover viruses.")
+    }
 
     if (!virus_assembly_db) {
-            log.warn("No virus assembly database supplied. Viruses will not be de-novo assembled")
-        }
+        log.warn("No virus assembly database supplied. Viruses will not be de-novo assembled")
+    }
 
     // BEGIN MAIN WORKFLOW
 
@@ -86,10 +82,13 @@ workflow VIRBA_SNIFF {
         FASTP.out.reads.set { main_ch }
     }
 
+    BBMAP_BBDUK(main_ch)
+    BBMAP_BBDUK.out.reads.set { main_ch }
+
     if (kraken2_host_db) {
-            KRAKEN2_REMOVE_HOST(main_ch, kraken2_host_db, false, false)
-            KRAKEN2_REMOVE_HOST.out.unclassified_reads_fastq.set { main_ch }
-        }
+        KRAKEN2_REMOVE_HOST(main_ch, kraken2_host_db, false, false)
+        KRAKEN2_REMOVE_HOST.out.unclassified_reads_fastq.set { main_ch }
+    }
 
     // KRAKEN2_CLASSIFY(main_ch, kraken2_virus_db, false, false)
 
@@ -97,27 +96,29 @@ workflow VIRBA_SNIFF {
     //     .join(KRAKEN2_CLASSIFY.out.classified_reads_fastq)
     //     .join(KRAKEN2_CLASSIFY.out.report).set { classify_ch }
 
-    KUNPENG_CLASSIFY(main_ch, classify_conf_thres, classify_min_fastq_score, kraken2_virus_db, classify_emit_minimizers)
+    MINIMAP2_BIG(main_ch, kraken2_virus_db)
 
-    KUNPENG_CLASSIFY.out.assignment
-        .join(main_ch)
-        .join(KUNPENG_CLASSIFY.out.report)
-        .set { classify_ch }
+    // KUNPENG_CLASSIFY(main_ch, classify_conf_thres, classify_min_fastq_score, kraken2_virus_db, classify_emit_minimizers)
+
+    // KUNPENG_CLASSIFY.out.assignment
+    //     .join(main_ch)
+    //     .join(KUNPENG_CLASSIFY.out.report)
+    //     .set { classify_ch }
 
     // level 1: extract lineages
-    if (virus_assembly_db) {
-        KRAKEN_EXTRACT_VIRUSES(classify_ch.combine(VIRUS_NCBI_TAXID), false, true)
+    // if (virus_assembly_db) {
+    //     KRAKEN_EXTRACT_VIRUSES(classify_ch.combine(VIRUS_NCBI_TAXID), false, true)
+
+    //     KRAKEN_EXTRACT_VIRUSES.out.extracted_kraken2_reads
+    //         .map { meta, reads, _tid -> [meta, reads] }
+    //         .join(KRAKEN2_CLASSIFY.out.classified_reads_assignment)
+    //         .join(KRAKEN2_CLASSIFY.out.report)
+    //         .map { meta, reads, asn, report -> [meta, asn, reads, report] }
+    //         .set { vir_ch }
 
 
-        KRAKEN_EXTRACT_VIRUSES.out.extracted_kraken2_reads.map { meta, reads, _tid -> [ meta, reads ]}
-            .join(KRAKEN2_CLASSIFY.out.classified_reads_assignment)
-            .join(KRAKEN2_CLASSIFY.out.report)
-            .map { meta, reads, asn, report -> [ meta, asn, reads, report ]}
-            .set { vir_ch }
-
-
-        VIRUSES(vir_ch, virus_assembly_db, virus_assembly_taxonids, min_assembly_coverage, min_assembly_depth)
-    }
+    //     VIRUSES(vir_ch, virus_assembly_db, virus_assembly_taxonids, min_assembly_coverage, min_assembly_depth)
+    // }
 
     // KRAKEN_EXTRACT_BACTERIA(classify_ch.combine(BACTERIA_NCBI_TAXID), false, true)
 
@@ -146,9 +147,9 @@ workflow VIRBA_SNIFF {
 
     def topic_versions_string = topic_versions.versions_tuple
         .map { process, tool, version ->
-            [ process[process.lastIndexOf(':')+1..-1], "  ${tool}: ${version}" ]
+            [process[process.lastIndexOf(':') + 1..-1], "  ${tool}: ${version}"]
         }
-        .groupTuple(by:0)
+        .groupTuple(by: 0)
         .map { process, tool_versions ->
             tool_versions.unique().sort()
             "${process}:\n${tool_versions.join('\n')}"
@@ -158,16 +159,11 @@ workflow VIRBA_SNIFF {
         .mix(topic_versions_string)
         .collectFile(
             storeDir: "${outdir}/pipeline_info",
-            name:  'virba_sniff_software_'  + 'versions.yml',
+            name: 'virba_sniff_software_' + 'versions.yml',
             sort: true,
-            newLine: true
+            newLine: true,
         )
-    emit:
-    versions       = ch_versions                 // channel: [ path(versions.yml) ]
-}
 
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    THE END
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
+    emit:
+    versions = ch_versions // channel: [ path(versions.yml) ]
+}
