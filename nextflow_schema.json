@@ -48,53 +48,13 @@
 					"type": "boolean",
 					"description": "skip FASTP trimming"
 				},
-				"kraken2_host_db": {
+				"contam_idx": {
 					"type": "string",
-					"description": "use a kraken2 database to remove host reads"
+					"description": "contaminant database indexed by minimap2"
 				},
-				"kraken2_save_host": {
-					"type": "boolean",
-					"description": "save the host-matching reads if a kraken2 host db was provided"
-				},
-				"kraken2_bacteria_db": {
+				"ref_idx": {
 					"type": "string",
-					"format": "directory-path",
-					"description": "kraken2 database to use for selecting bacterial reads"
-				},
-				"kraken2_virus_db": {
-					"type": "string",
-					"format": "path",
-					"description": "kraken2 database to use for selecting viral reads"
-				},
-				"classify_min_fastq_score": {
-					"type": "number",
-					"description": "minimum fastq score for classification"
-				},
-				"classify_conf_thres": {
-					"type": "number",
-					"description": "confidence threshold (% of query kmers hit) for classification"
-				},
-				"classify_emit_minimizers": {
-					"type": "boolean",
-					"description": "emit minimizers from classifier"
-				},
-				"virus_assembly_taxonids": {
-					"type": "string",
-					"format": "path",
-					"description": "single-column, headerless TSV of viral taxids to be considered for denovo assembly"
-				},
-				"virus_assembly_db": {
-					"type": "string",
-					"format": "path",
-					"description": "single-column, headerless TSV of viral taxids to be considered for denovo assembly"
-				},
-				"assembly_min_coverage": {
-					"type": "number",
-					"description": "minimum alignment coverage for a reference to be selected for de-novo assembly."
-				},
-				"assembly_min_depth": {
-					"type": "number",
-					"description": "minimum alignment depth for a refernce to be selected for de-novo assembly."
+					"description": "minimap2 index for classication"
 				}
 			}
 		},
